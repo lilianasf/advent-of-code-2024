@@ -110,9 +110,11 @@ const lowestScorePath = (puzzle, initialPos, targetPos) => {
     },
   ];
   let lowestScore = Number.MAX_VALUE;
+  const visited = new Set();
 
   while (possiblePaths.length > 0) {
     const path = possiblePaths.pop();
+    console.log("UIII", possiblePaths.length);
 
     const { path: currentPath, total: currentTotal } = path;
     const [lastPos, lastDirection] = currentPath[currentPath.length - 1];
@@ -130,6 +132,7 @@ const lowestScorePath = (puzzle, initialPos, targetPos) => {
         );
 
         lowestScore = currentTotal;
+        break;
       }
     } else if (currentTotal < lowestScore) {
       const allUsedPositions = currentPath.map((pos) => {
@@ -138,29 +141,37 @@ const lowestScorePath = (puzzle, initialPos, targetPos) => {
         return `${position[0]}|${position[1]}`;
       });
 
+      if (visited.has(`${lastPos[0]}|${lastPos[1]}`)) {
+        continue;
+      }
+
       const adjacents = adjacentPositions(puzzle, lastPos, allUsedPositions);
 
-      const parsedAdjacents = adjacents
-        .map((adjacent) => {
-          const [adjacentPos, adjacentDirection] = adjacent;
-          const newTotal = updatedScore(
-            currentTotal,
-            lastDirection,
-            adjacentDirection,
-          );
+      const parsedAdjacents = adjacents.map((adjacent) => {
+        const [adjacentPos, adjacentDirection] = adjacent;
+        const newTotal = updatedScore(
+          currentTotal,
+          lastDirection,
+          adjacentDirection,
+        );
 
-          return {
-            path: [...currentPath, [adjacentPos, adjacentDirection]],
-            total: newTotal,
-          };
-        })
-        .sort((path1, path2) => path2.total - path1.total);
+        return {
+          path: [...currentPath, [adjacentPos, adjacentDirection]],
+          total: newTotal,
+        };
+      });
 
       parsedAdjacents.forEach((newPath) => {
         if (newPath.total < lowestScore) {
           possiblePaths.push(newPath);
         }
       });
+
+      possiblePaths = possiblePaths.sort(
+        (path1, path2) => path2.total - path1.total,
+      );
+
+      visited.add(`${lastPos[0]}|${lastPos[1]}`);
     }
   }
 
