@@ -29,180 +29,86 @@ const possibleDesigns = (currentDesign, patterns) => {
   return designs;
 };
 
-const possiblePatterns = (currentDesign, design, patterns) => {
-  const designs = [];
-
-  patterns.forEach((pattern) => {
-    const newDesign = currentDesign + pattern;
-
-    if (design.startsWith(newDesign)) {
-      designs.push(newDesign);
-    }
-  });
-
-  return designs;
-};
-
-const numberOfWaysToMakeDesign = (design, patterns, designsWays) => {
-  const initialDesigns = possibleDesigns("", design, patterns);
-
-  if (initialDesigns.length === 0) {
-    return 0;
-  }
-
-  console.log("initialDesigns", initialDesigns);
-
-  const designsToTest = initialDesigns;
-  let numberOfWaysToMakeDesign = 0;
-  const seenDesigns = {};
-
-  while (designsToTest.length > 0) {
-    const currentDesign = designsToTest.pop();
-
-    console.log("currentDesign", currentDesign);
-
-    if (currentDesign === design) {
-      numberOfWaysToMakeDesign++;
-
-      continue;
-    }
-
-    let newDesigns;
-
-    if (seenDesigns[currentDesign]) {
-      newDesigns = seenDesigns[currentDesign];
-    } else {
-      const designsToTest = possibleDesigns(currentDesign, design, patterns);
-
-      newDesigns = designsToTest;
-      seenDesigns[currentDesign] = designsToTest;
-    }
-
-    if (newDesigns.length > 0) {
-      newDesigns.forEach((newDesign) => designsToTest.push(newDesign));
-    }
-  }
-
-  return numberOfWaysToMakeDesign;
-};
-
-const possibleWaysToMakeDesigns = (designs, patterns) => {
-  let total = 0;
-  const chunksDesignsTotals = {};
-
-  designs.forEach((design) => {
-    const chunks = [];
-
-    for (let i = 0, charsLength = design.length; i < charsLength; i += 4) {
-      chunks.push(design.substring(i, i + 4));
-    }
-
-    console.log("design and chunks", design, chunks);
-
-    let currentDesignTotal = 0;
-
-    chunks.forEach((chunk) => {
-      if (chunksDesignsTotals[chunk]) {
-        console.log("using a saved one");
-        currentDesignTotal += chunksDesignsTotals[chunk];
-      } else {
-        const numberOfWays = numberOfWaysToMakeDesign(chunk, patterns);
-
-        chunksDesignsTotals[chunk] = numberOfWays;
-
-        currentDesignTotal += numberOfWays;
-      }
-    });
-
-    console.log("design total", currentDesignTotal);
-    console.log("------");
-
-    total += currentDesignTotal;
-  });
-
-  return total;
-};
-
-// currentSubstring -> b
-const testingRe = (
-  targetDesign,
+const getCombinations = (
+  finalDesign,
   patterns,
-  seenDesigns,
-  currentDesign,
-  nextDesign,
+  seenSubStrings,
+  currentSubString,
+  nextSubString,
 ) => {
   // Begin
-  if (currentDesign === undefined) {
-    const initialDesigns = possibleDesigns(targetDesign, patterns);
+  if (currentSubString === undefined) {
+    const initialDesigns = possibleDesigns(finalDesign, patterns);
 
     if (initialDesigns.length === 0) {
       return 0;
     } else {
-      let total = 0;
+      let combinations = 0;
 
       initialDesigns.forEach((design) => {
-        const nextSubstring = targetDesign.slice(design.length);
+        const nextSubstring = finalDesign.slice(design.length);
 
-        if (seenDesigns[nextSubstring]) {
-          total += seenDesigns[nextSubstring];
+        if (seenSubStrings[nextSubstring]) {
+          combinations += seenSubStrings[nextSubstring];
         } else {
-          const cost = testingRe(
-            targetDesign,
+          const cost = getCombinations(
+            finalDesign,
             patterns,
-            seenDesigns,
+            seenSubStrings,
             design,
             nextSubstring,
           );
 
-          seenDesigns[nextSubstring] = cost;
+          seenSubStrings[nextSubstring] = cost;
 
-          total += cost;
+          combinations += cost;
         }
       });
 
-      return total;
+      return combinations;
     }
-  } else if (currentDesign === targetDesign) {
+  } else if (currentSubString === finalDesign) {
     return 1;
   } else {
-    const designs = possibleDesigns(nextDesign, patterns);
+    const designs = possibleDesigns(nextSubString, patterns);
 
-    let total = 0;
+    let combinations = 0;
 
     designs.forEach((design) => {
-      const joinedDesign = currentDesign + design;
-      const nextSubstring = targetDesign.slice(joinedDesign.length);
+      const subString = currentSubString + design;
+      const nextSubstring = finalDesign.slice(subString.length);
 
-      if (seenDesigns[nextSubstring]) {
-        return (total += seenDesigns[nextSubstring]);
+      if (seenSubStrings[nextSubstring]) {
+        return (combinations += seenSubStrings[nextSubstring]);
       } else {
-        const cost = testingRe(
-          targetDesign,
+        const cost = getCombinations(
+          finalDesign,
           patterns,
-          seenDesigns,
-          joinedDesign,
+          seenSubStrings,
+          subString,
           nextSubstring,
         );
 
         if (nextSubstring !== "") {
-          seenDesigns[nextSubstring] = cost;
+          seenSubStrings[nextSubstring] = cost;
         }
-        total += cost;
+
+        combinations += cost;
       }
     });
 
-    if (!seenDesigns[nextDesign]) {
-      seenDesigns[nextDesign] = total;
+    if (!seenSubStrings[nextSubString]) {
+      seenSubStrings[nextSubString] = combinations;
     }
 
-    return total;
+    return combinations;
   }
 };
 
 const findNumberOfCombinations = (design, patterns) => {
-  const seenCombinations = {};
+  const seenSubStrings = {};
 
-  return testingRe(design, patterns, seenCombinations);
+  return getCombinations(design, patterns, seenSubStrings);
 };
 
 let total = 0;
